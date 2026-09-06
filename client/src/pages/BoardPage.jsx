@@ -206,83 +206,89 @@ export default function BoardPage() {
     }}>
       <header style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
-        padding: '0 24px', 
-        height: 64,
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        padding: '12px 20px',
+        minHeight: 64,
         alignItems: 'center',
         background: '#fff',
-        borderBottom: '1px solid #e0e0e0'
+        borderBottom: '1px solid #e0e0e0',
+        gap: 16
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               borderRadius: 8,
               background: '#2196F3',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
-              fontSize: 18,
-              fontWeight: 600
+              fontSize: 16,
+              fontWeight: 600,
+              flexShrink: 0
             }}>
               S
             </div>
             <h1 style={{ 
               margin: 0, 
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: 600,
               color: '#212121',
-              letterSpacing: '-0.3px'
+              letterSpacing: '-0.3px',
+              whiteSpace: 'nowrap'
             }}>
               SyncBoard
             </h1>
           </div>
           
-          <div style={{ borderLeft: '1px solid #e0e0e0', height: 32 }} />
+          <div style={{ borderLeft: '1px solid #e0e0e0', height: 28, display: window.innerWidth > 768 ? 'block' : 'none' }} />
           
           <TeamSelector />
           
           <button
             onClick={() => navigate('/teams')}
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               background: '#f5f5f9',
               border: '1px solid #e0e0e0',
               borderRadius: 6,
               cursor: 'pointer',
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 500,
               color: '#424242',
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
+              whiteSpace: 'nowrap'
             }}
           >
             👥 Manage Teams
           </button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <ConnectionStatus status={state.connection} />
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 12
+            gap: 10
           }}>
-            <span style={{ fontSize: 14, color: '#424242', fontWeight: 500 }}>{user?.name}</span>
+            <span style={{ fontSize: 13, color: '#424242', fontWeight: 500, display: window.innerWidth > 640 ? 'inline' : 'none' }}>{user?.name}</span>
             <div
               style={{
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 borderRadius: '50%',
                 background: '#2196F3',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: 14,
-                fontWeight: 600
+                fontSize: 13,
+                fontWeight: 600,
+                flexShrink: 0
               }}
             >
               {user?.name?.[0]?.toUpperCase()}
@@ -290,15 +296,16 @@ export default function BoardPage() {
             <button
               onClick={handleLogout}
               style={{
-                padding: '8px 16px',
+                padding: '6px 14px',
                 background: '#fff',
                 border: '1px solid #e0e0e0',
                 borderRadius: 4,
                 cursor: 'pointer',
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: 500,
                 color: '#424242',
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
               }}
               onMouseOver={(e) => {
                 e.target.style.background = '#f5f5f5';
