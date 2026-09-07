@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -165,8 +166,20 @@ export default function Landing() {
 }
 
 function FeatureCard({ icon, title, description }) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   return (
-    <div style={styles.featureCard}>
+    <div 
+      style={{
+        ...styles.featureCard,
+        transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
+        boxShadow: isHovered 
+          ? '0 12px 40px rgba(0,0,0,0.15)' 
+          : '0 4px 20px rgba(0,0,0,0.08)',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div style={styles.featureIcon}>{icon}</div>
       <h3 style={styles.featureTitle}>{title}</h3>
       <p style={styles.featureDescription}>{description}</p>
@@ -181,7 +194,7 @@ function scrollToFeatures() {
 const styles = {
   container: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#0f172a',
     position: 'relative',
     overflow: 'hidden',
   },
@@ -218,14 +231,14 @@ const styles = {
   },
   primaryButton: {
     padding: '10px 24px',
-    background: 'white',
-    color: '#667eea',
+    background: '#3b82f6',
+    color: 'white',
     border: 'none',
     borderRadius: 8,
     fontSize: 15,
     fontWeight: 600,
     cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
+    transition: 'all 0.3s ease',
   },
   secondaryButton: {
     padding: '10px 24px',
@@ -261,10 +274,7 @@ const styles = {
     letterSpacing: '-2px',
   },
   titleAccent: {
-    background: 'linear-gradient(90deg, #ffd89b 0%, #19547b 100%)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    backgroundClip: 'text',
+    color: '#3b82f6',
   },
   subtitle: {
     fontSize: 20,
@@ -283,15 +293,15 @@ const styles = {
   },
   ctaButton: {
     padding: '16px 40px',
-    background: 'white',
-    color: '#667eea',
+    background: '#3b82f6',
+    color: 'white',
     border: 'none',
     borderRadius: 12,
     fontSize: 18,
     fontWeight: 700,
     cursor: 'pointer',
-    transition: 'transform 0.2s, box-shadow 0.2s',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
   },
   secondaryCtaButton: {
     padding: '16px 40px',
@@ -302,7 +312,7 @@ const styles = {
     fontSize: 18,
     fontWeight: 700,
     cursor: 'pointer',
-    transition: 'background 0.2s',
+    transition: 'all 0.3s ease',
     backdropFilter: 'blur(10px)',
   },
 
@@ -335,7 +345,8 @@ const styles = {
     background: 'white',
     borderRadius: 16,
     boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-    transition: 'transform 0.2s, box-shadow 0.2s',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    cursor: 'default',
   },
   featureIcon: {
     fontSize: 48,
@@ -356,7 +367,7 @@ const styles = {
 
   // CTA section styles
   cta: {
-    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+    background: '#1e293b',
     padding: '100px 24px',
     textAlign: 'center',
   },
@@ -379,15 +390,15 @@ const styles = {
   },
   ctaButtonLarge: {
     padding: '18px 48px',
-    background: 'white',
-    color: '#667eea',
+    background: '#3b82f6',
+    color: 'white',
     border: 'none',
     borderRadius: 12,
     fontSize: 18,
     fontWeight: 700,
     cursor: 'pointer',
     transition: 'transform 0.2s, box-shadow 0.2s',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+    boxShadow: '0 8px 24px rgba(59, 130, 246, 0.3)',
   },
 
   // Footer styles

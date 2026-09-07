@@ -55,7 +55,7 @@ export default function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: '#0f172a',
       position: 'relative'
     }}>
       {/* Back to Home Link */}
@@ -180,7 +180,7 @@ export default function Login() {
             style={{
               width: '100%',
               padding: '12px',
-              background: loading ? '#999' : '#667eea',
+              background: loading ? '#999' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: 6,
@@ -204,7 +204,7 @@ export default function Login() {
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#667eea',
+                color: '#3b82f6',
                 cursor: 'pointer',
                 textDecoration: 'underline',
                 padding: 0,
