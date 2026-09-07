@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:4000';
 
-export default function CardModal({ card, onClose, onTitleChange, onDeleteCard }) {
+export default function CardModal({ card, onClose, onTitleChange, onDescriptionChange, onDeleteCard }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(false);
@@ -11,6 +11,7 @@ export default function CardModal({ card, onClose, onTitleChange, onDeleteCard }
   const [localTitle, setLocalTitle] = useState(card.title);
   const [localDescription, setLocalDescription] = useState(card.description || '');
   const { token, user } = useAuth();
+  const descriptionTimeoutRef = useRef(null);
 
   useEffect(() => {
     loadComments();
@@ -89,6 +90,29 @@ export default function CardModal({ card, onClose, onTitleChange, onDeleteCard }
     }
   };
 
+  const handleDescriptionChange = (newDescription) => {
+    setLocalDescription(newDescription);
+    
+    // Debounce description sync - only send after user stops typing for 500ms
+    if (descriptionTimeoutRef.current) {
+      clearTimeout(descriptionTimeoutRef.current);
+    }
+    
+    descriptionTimeoutRef.current = setTimeout(() => {
+      console.log('💬 Syncing description change');
+      onDescriptionChange(card.id, newDescription);
+    }, 500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (descriptionTimeoutRef.current) {
+        clearTimeout(descriptionTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div
       style={{
@@ -161,7 +185,7 @@ export default function CardModal({ card, onClose, onTitleChange, onDeleteCard }
           <h3 style={{ fontSize: 16, marginBottom: 10 }}>Description</h3>
           <textarea
             value={localDescription}
-            onChange={(e) => setLocalDescription(e.target.value)}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
             placeholder="Add a description..."
             style={{
               width: '100%',

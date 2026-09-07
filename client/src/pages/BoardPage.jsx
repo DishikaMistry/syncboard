@@ -48,16 +48,23 @@ export default function BoardPage() {
       clientId: CLIENT_ID,
     };
 
+    console.log(`📝 sendOp called - field: ${field}, value:`, value);
+    console.log(`   Socket exists: ${!!socketRef.current}, Connected: ${socketRef.current?.connected}`);
+
     dispatch({ type: 'OPTIMISTIC_UPDATE', cardId, field, value });
 
     if (socketRef.current && socketRef.current.connected) {
+      console.log('🟢 Online: Sending op immediately', op);
       socketRef.current.emit('op', op);
     } else {
-      enqueueOp(op);
+      console.log('🔴 Offline: Queueing op for later', op);
+      const queue = enqueueOp(op);
+      console.log(`   Queue now has ${queue.length} operations`);
     }
   }
 
   const onTitleChange = (cardId, title) => sendOp('title', cardId, title);
+  const onDescriptionChange = (cardId, description) => sendOp('description', cardId, description);
   const onCardMove = (cardId, targetListId) => sendOp('list_id', cardId, targetListId);
   
   const onDeleteCard = (cardId) => {
@@ -75,6 +82,13 @@ export default function BoardPage() {
   const onAddCard = async (listId) => {
     if (!currentBoardId) return;
     
+    // Check if offline
+    if (!socketRef.current?.connected) {
+      console.log('⚠️ Cannot create cards while offline');
+      alert('You are offline. Creating new cards requires a connection. You can still edit existing cards.');
+      return;
+    }
+    
     try {
       const res = await fetch(`${SERVER_URL}/boards/${currentBoardId}/cards`, {
         method: 'POST',
@@ -84,6 +98,11 @@ export default function BoardPage() {
         },
         body: JSON.stringify({ listId, title: 'New Card' }),
       });
+      
+      if (!res.ok) {
+        throw new Error('Failed to create card');
+      }
+      
       const data = await res.json();
       
       // Add locally
@@ -95,6 +114,7 @@ export default function BoardPage() {
       }
     } catch (err) {
       console.error('Failed to create card', err);
+      alert('Failed to create card. Please check your connection.');
     }
   };
 
@@ -127,7 +147,8 @@ export default function BoardPage() {
         setCurrentBoardId(data.board.id);
         dispatch({ type: 'LOAD_SNAPSHOT', board: data.board, lists: data.lists, cards: data.cards });
       } catch (err) {
-        console.error('Failed to load board:', err);
+        console.error('⚠️ Failed to load board (this is normal if offline):', err.message);
+        // If offline, we'll keep the current board state and just show offline indicator
       }
     }
     
@@ -140,27 +161,64 @@ export default function BoardPage() {
     
     // Initial load / resync snapshot.
     async function loadSnapshot() {
-      const res = await fetch(`${SERVER_URL}/boards/${currentBoardId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      dispatch({ type: 'LOAD_SNAPSHOT', board: data.board, lists: data.lists, cards: data.cards });
+      try {
+        const res = await fetch(`${SERVER_URL}/boards/${currentBoardId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) {
+          console.log('⚠️ Could not fetch snapshot (offline?) - keeping current state');
+          return;
+        }
+        
+        const data = await res.json();
+        dispatch({ type: 'LOAD_SNAPSHOT', board: data.board, lists: data.lists, cards: data.cards });
+      } catch (err) {
+        console.log('⚠️ Snapshot fetch failed (expected if offline):', err.message);
+        // Keep current state, don't crash
+      }
     }
 
     const socket = createSocket();
     socketRef.current = socket;
 
     socket.on('connect', () => {
+      console.log('🟢 Socket connected! Joining board:', currentBoardId);
       socket.emit('join-board', { boardId: currentBoardId });
       dispatch({ type: 'SET_CONNECTION', status: 'syncing' });
 
-      // Flush anything queued while offline, then re-pull a fresh snapshot so this
-      // client converges with whatever changed elsewhere while it was gone.
-      flushQueue((ops) => socket.emit('op-batch', { ops }));
-      loadSnapshot().then(() => dispatch({ type: 'SET_CONNECTION', status: 'online' }));
+      // Flush anything queued while offline
+      console.log('🔄 Flushing offline queue...');
+      const queuedOps = flushQueue((ops) => {
+        if (ops.length > 0) {
+          console.log(`📤 Sending ${ops.length} queued operations`, ops);
+          socket.emit('op-batch', { ops });
+        }
+      });
+
+      if (queuedOps.length > 0) {
+        console.log(`⏳ ${queuedOps.length} queued ops sent - waiting for server to process...`);
+        // Wait for server to process all operations and broadcast op-resolved events
+        // Then reload snapshot to get any changes from other clients
+        setTimeout(() => {
+          loadSnapshot().then(() => {
+            console.log('✅ Snapshot reloaded after queue processed, status: online');
+            dispatch({ type: 'SET_CONNECTION', status: 'online' });
+          });
+        }, 2000); // 2 second delay to ensure operations are processed
+      } else {
+        // No queued operations, safe to reload immediately
+        loadSnapshot().then(() => {
+          console.log('✅ Snapshot loaded, status: online');
+          dispatch({ type: 'SET_CONNECTION', status: 'online' });
+        });
+      }
     });
 
-    socket.on('disconnect', () => dispatch({ type: 'SET_CONNECTION', status: 'offline' }));
+    socket.on('disconnect', () => {
+      console.log('🔴 Socket disconnected');
+      dispatch({ type: 'SET_CONNECTION', status: 'offline' });
+    });
 
     socket.on('op-resolved', ({ cardId, field, value, applied }) => {
       const current = state.cards.find((c) => c.id === cardId);
@@ -180,12 +238,22 @@ export default function BoardPage() {
     });
 
     function handleOffline() {
+      console.log('🔴 Browser offline event detected');
       dispatch({ type: 'SET_CONNECTION', status: 'offline' });
     }
+    
+    function handleOnline() {
+      console.log('🟢 Browser online event detected - socket will reconnect');
+      // Socket.io will automatically attempt to reconnect
+      // The 'connect' event handler will handle the rest
+    }
+    
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
 
     return () => {
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
       socket.emit('leave-board', { boardId: currentBoardId });
       socket.disconnect();
     };
@@ -342,6 +410,7 @@ export default function BoardPage() {
           card={selectedCard}
           onClose={() => setSelectedCard(null)}
           onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
           onDeleteCard={onDeleteCard}
         />
       )}

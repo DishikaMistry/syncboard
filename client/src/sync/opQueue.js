@@ -28,10 +28,11 @@ export function clearQueue() {
   saveQueue([]);
 }
 
-/** Flush the queue via the provided send function; clears the queue once acked. */
+/** Flush the queue via the provided send function; returns the queue before clearing. */
 export function flushQueue(sendBatchFn) {
   const queue = loadQueue();
-  if (queue.length === 0) return;
+  if (queue.length === 0) return [];
   sendBatchFn(queue);
   clearQueue();
+  return queue;
 }
